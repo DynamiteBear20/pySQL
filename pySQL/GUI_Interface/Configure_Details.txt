@@ -1,0 +1,4 @@
+def configure(user,password,autoConnect,host):
+    file = open('Account_Detail.sad','w',encoding='utf-8')
+    file.write(user+','+password+','+autoConnect+','+host)
+    file.close()

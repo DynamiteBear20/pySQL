@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<title>Documentation 1.1</title>
+</head>
+<body>
+<h4 align='center'>Welcome to</h4>
+<h1 align='center'><u>MySQL Python Easy Launcher (1.1) Documentation</u></h1><br><br>
+<p>You can move to certain part of this documentation through links given below:</p>
+<ul>
+<li><a href='#about'>About</a></li>
+<li><a href='#installation'>Installation</a></li>
+<li><a href='#mysql'>MySQL commands</a></li>
+<li><a href='#connector'>Connector commands</a></li>
+<li><a href='#whatnew'>What's new?</a></li>
+<li><a href='#whatcoming'>What's coming?</a></li>
+</ul><br>
+
+<h2 id='about'>About MySQL connector python</h2>
+<p>This program is designed to help you connect to your MySQL database and perform certain 'Special' actions too.<br>This version has two interface-</p>
+<ol><li>Line interface (Also reffered to as Dev interface)</li>
+<li>GUI interface (Also reffered to as Client interface)</li></ol>
+<img src='images(documentation)/Dev interface image.bmp'>
+<p>Line interface(Dev interface)</p>
+<img src='images(documentation)/GUI interface image.bmp'><p>GUI interface(Client interface)</p>
+<br><p><strong>Any one</strong> can be chosen at the time of installation</p>
+<br><br>
+
+<h2 id='installation'>Installation steps</h2>
+<p>Before using this program, there are some requirements needed to be installed, they are</p>
+<ul><li>Python 3.x installed</li><li>MySQL server instaled</li></ul>
+<img src='images(documentation)/python image.bmp'>
+<p>Python IDLE image</p>
+<img src='images(documentation)/mysql server.bmp'>
+<p>MySQL command client, that comes with MySQL server</p>
+<br><p>Once these programs are installed and working, you can run the installer</p>
+<img src='images(documentation)/installer image.bmp'><p>Installer file (with .pyw extension)</p>
+<br><p>Once you run the installer, the following should appear</p>
+<img src='images(documentation)/installer run image.bmp'><br>
+<p>Select your preferred interface and hit install, the interface folders will disappear and three new files will be created.</p>
+<ol><li>main.py <img src='images(documentation)/main image.bmp'></li>
+<li>Configure_Details.py<img src='images(documentation)/configure image.bmp'></li>
+<li>Output.py<img src='images(documentation)/output image.bmp'></li></ol>
+<p>You can delete the installer as it won't work now</p><br>
+<p><i>GREAT</i>,now that you have installed MPEL(MySQL Python Easy Launcher), let's take a look at what you should make sure while entering MySQL statements/queries</p>
+<h2 id='mysql'>MySQL statements/queries</h2>
+<p>Firstly, MySQL statements are used as same as you would in your MySQL client, only </p>
+<ul><li>Semi-colon(;) is not required when you are entering only 1 statement</li>
+<li>MySQL help utility will not work (\h in MySQL)</li></ul><br>
+<p><b>Most output is shown in the output box of GUI interface, while all output is shown in python console of Line interface.</b></p>
+<h2 id='connector'>Connector commands</h2>
+<p>This program also comes with some additional functions (the special actions we talked about in the <a href='#about'>About</a> section).We call these functions 'Connector commands'.Here are some things you need to look out for when using connector commands</p>
+<ul>
+<li>All connector commands start with <strong>exclamatory mark (!)</strong></li>
+<li>All connector commands are <strong>full-caps/upper-case</strong>.</li>
+<li>Fields are seperated by <strong>single space ( )</strong>, and are case-sensitive</li>
+</ul>
+<p>The connector commands are- (click on the name to get straight to it's details)</p>
+<ol><li><a href='#help'>help</a> (<code>!HELP</code>)</li>
+<li><a href='#export'>export</a> (<code>!EXPORT</code>)</li>
+<li><a href='#sheetnames'>sheet names</a> (<code>!SHEETNAMES</code>)</li>
+<li><a href='#renamesheet'>rename sheet</a> (<code>!RENAMESHEET</code>)</li>
+<li><a href='#exportdb'>export database</a> (<code>!EXPORTDB</code>)</li>
+<li><a href='#deletesheet'>delete sheet</a> (<code>!DELETESHEET</code>)</li>
+<li><a href='#exportnew'>export new</a> (<code>!EXPORTNEW</code>)</li>
+<li><a href='#config'>configure</a> (<code>!CONFIG</code>)</li>
+<li><a href='#version'>version</a> (<code>!VERSION</code>)</li>
+<li><a href='#exportpath'>export path</a> (<code>!EXPORTPATH</code>)</li>
+<li><a href='#tableview'>table view</a> (<code>!TABLEVIEW</code>) (GUI interface)</li>
+</ol>
+<p>Let's go through them in detail</p>
+<ol>
+<li> <h4 id='help'>Help (<code>!HELP</code>)</h4>
+<p>The help command tells about all the connector commands.
+The help command takes no arguement (data)</p>
+<p>The syntax is - <code>!HELP</code></p>
+</li>
+<li> <h4 id='export'>Export (<code>!EXPORT</code>)</h4>
+<p>The export command exports a table to the excel file '<b><u>OutPut.excel</u></b>'.<strong>The database of the table being exported has to be selected before exporting.</strong></p>
+<p>The syntax is - <code>!EXPORT table_name sheet_name</code> - where the 'table_name' has to be replaced by the name of the table you want to export (as in MySQL database) and 'sheet_name' has to be replaced by the name of sheet you want in 'OutPut.excel' file.</p>
+<p>The export command creates a new sheet for every export, please select a different name or use <code>!SHEETNAMES</code> to get names of sheets in the 'OutPut.excel' file. This is strictly advised because your data in the sheet will be overwritten if the same name is used</p>
+</li>
+<li> <h4 id='sheetnames'>Sheet names (<code>!SHEETNAMES</code>)</h4>
+<p>This command tells you the names of sheets in the 'OutPut.excel' file.</p>
+<p>The syntax - <code>!SHEETNAMES</code></p>
+<p>It is extremely useful when you have exported many tables, or have forgot wether you have exported a table or not</p>
+</li>
+<li><h4 id='renamesheet'>Rename sheet (<code>!RENAMESHEET</code>)</h4>
+<p>Renames a sheet present in 'OutPut.excel'.</p>
+<p>The syntax is - <code>!RENAMESHEET old_sheet_name new_sheet_name</code> - replacing 'old_sheet_name' with the name of the sheet you want to change the name of and 'new_sheet_name' with the name you want for that sheet</p>
+</li>
+<li><h4 id='exportdb'>Export database</h4>
+<p>Exports a complete database to excel file 'OutPut.excel'</p>
+<p>The syntax is - <code>!EXPORTDB db_name</code> - where 'db_name' has to be replaced by the name of database you want to export (sheets are named same as the table names).It is advised to be using the database you want to export</p>
+</li>
+<li><h4 id='deletesheet'>Delete sheet</h4
+<p>It deletes a certain sheet present in 'OutPut.excel'</p>
+<p>The syntax is - <code>!DELETESHEET sheet_name</code> - where 'sheet_name' has to be replaced by the name of sheet you want to delete.</p></li>
+<li><h4 id='exportnew'>Export to new workbook</h4>
+<p>This exports a table to a new workbook. The database of which you are exporting the table has to be in use/ has to be selected</p>
+<p>The syntax is - <code>!EXPORTNEW table_name sheet_name workbook_name</code> - where 'table_name' has to be replaced by the name of table you want to export, 'sheet_name' has to be replaced by the sheet name you want and 'workbook_name' by the name of workbook you want</p>
+</li>
+<li><h4 id='config'>Configure</h4>
+<p>Configures MPEL</p>
+<p>The syntax is - <code>!CONFIG</code></p></li>
+<li><h4 id='version'>Version</h4>
+<p>This tells the version of MPEL</p>
+<p>The syntax is - <code>!VERSION</code></p>
+</li>
+<li><h4 id='exportpath'>Export path</h4>
+<p>This returns the path where your export file is present (OutPut.excel)</p>
+<p>The syntax is - <code>!EXPORTPATH</code></p>
+</li>
+<li><h4 id='tableview'>Table view</h4>
+<p>This displays data in tabulated form</p>
+<p>The syntax is- <code>!TABLEVIEW table_name</code> - where 'table_name' has to be replaced by the the table name of which you want to see the tabulated form</p>
+</li>
+</ol><br>
+<h2 id='whatnew'>What's new</h2>
+<p>This version has many improvements since last update (Pre-release 0.5), they are listed below</p>
+<ul>
+<li><b>Connector Commands</b> (listed above)</li>
+<li><b>GUI interface</b></li>
+<li><b>Installer module</b></li>
+<li><b>Export</b> (connector command)</li>
+</ul><br>
+<h2 id='whatcoming'>What's coming?</h2>
+<p>The next update can be version 1.9, nicknamed '2'.The following can be expected from it:</p>
+<ul>
+<li>Experimental interface</li>
+<li>Coder's interface</li>
+<li>Importing data</li>
+<li>Read aloud program messages(experimental interface)</li>
+<li>Better installer</li>
+<li>Better interfaces</li>
+<li>Feedback system</li>
+<li>user's commands</li>
+<li>Better documentation</li>
+</ul>
+<p>These are just some future plans, these may or may not be implemented by the next version</p><br>
+<br>
+<p align='center'>We hope this documentation helped you understand our program(MPEL, MySQL Python Easy Launcher) better.If you still have doubts, then you can message the dev your problem</p>
+<br>
+<p align='center'><i>THE END</i></p>
+</body>
+</html>

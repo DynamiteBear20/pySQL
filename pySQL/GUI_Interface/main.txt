@@ -1,0 +1,388 @@
+import os,sys,subprocess
+import tkinter as tk
+from tkinter import *
+from tkinter import ttk
+try:
+    import mysql.connector
+    from mysql.connector import errorcode
+    import openpyxl
+except ModuleNotFoundError:
+    print('--Dependencies not installed, installing--')
+    subprocess.run(['pip','install','openpyxl'])
+    subprocess.run(['pip','install','mysql-connector-python'])
+    print('--Dependencies installed--')
+    import mysql.connector
+    from mysql.connector import errorcode
+    import openpyxl
+from Output import commands
+from Configure_Details import configure
+import webbrowser as web
+
+def runner():
+    command = statement.get()
+    statement.set('')
+    if command=='exit':
+        conn.commit()
+        translator.close()
+        conn.close()
+        exit()
+    elif command=='':
+        conn.commit()
+        translator.close()
+        conn.close()
+        exit()
+    if command[0]=='!':
+        splitCommand = command.split(' ')
+        try:
+            if splitCommand[0] == '!EXPORT':
+                translator.execute('desc '+splitCommand[1])
+                headers = []
+                for x in translator.fetchall():
+                    headers.append(x[0])
+                translator.execute('select * from '+splitCommand[1])
+                commands('OutPut').export(splitCommand[2],headers,translator.fetchall())
+            elif splitCommand[0]=='!SHEETNAMES':
+                output.insert(tk.END,str(commands('Output').getSheetNames())+'\n')
+            elif splitCommand[0]=='!RENAMESHEET':
+                oldSheetName = splitCommand[1]
+                newSheetName = splitCommand[2]
+                commands('OutPut').renameSheet(oldSheetName,newSheetName)
+            elif splitCommand[0]=='!EXPORTDB':
+                translator.execute(f'use {splitCommand[1]}')
+                translator.execute('show tables')
+                tables = translator.fetchall()
+                for table in tables:
+                    translator.execute('desc '+table[0])
+                    headers = []
+                    for x in translator.fetchall():
+                        headers.append(x[0])
+                    translator.execute('select * from '+table[0])
+                    commands('OutPut').export(table[0],headers,translator.fetchall())
+            elif splitCommand[0]=='!DELETESHEET':
+                commands('OutPut').deleteSheet(splitCommand[1])
+            elif splitCommand[0]=='!EXPORTNEW':
+                translator.execute('desc '+splitCommand[1])
+                headers = []
+                for x in translator.fetchall():
+                    headers.append(x[0])
+                translator.execute('select * from '+splitCommand[1])
+                commands('OutPut').exportToNew(splitCommand[2],headers,translator.fetchall(),splitCommand[3])
+            elif splitCommand[0]=='!CONFIG':
+                configuration()
+                conn.commit()
+                translator.close()
+                conn.close()
+                exit()
+            elif command=='!HELP':
+                output.insert(tk.END,'All Connector commands are uppercase and start with a exclamatory mark, the commands are-'+'\n')
+                output.insert(tk.END,"'!EXPORT' \nexports data to excel file 'OutPut.xlsx' -- syntax-> !EXPORT table_name sheet_name -- NOTE:please make sure you are connected to the desired database before exporting or it won't work"+'\n')
+                output.insert(tk.END,"'!SHEETNAMES' \ndisplays all the sheet names present in your output excel file -- syntax-> !SHEETNAMES"+'\n')
+                output.insert(tk.END,"'!RENAMESHEET' \nrenames a sheet in output file -- syntax-> !RENAMESHEET oldSheetName newSheetname"+'\n')
+                output.insert(tk.END,"'!EXPORTDB' \nexports a complete database -- syntax-> !EXPORTDB db_name"+'\n')
+                output.insert(tk.END,"'!DELETESHEET' \ndeletes a sheet in the currently-using workbook -- syntax-> !DELETESHEET sheet_name"+'\n')
+                output.insert(tk.END,"'!EXPORTNEW' \nexports data of a table to a new excel file -- syntax-> !EXPORTNEW table_name sheet_name workbook_name"+'\n')
+                output.insert(tk.END,"'!CONFIG' \nruns the configuration -- syntax-> !CONFIG"+'\n')
+                output.insert(tk.END,"'!VERSION' \nprints the version of program -- syntax-> !VERSION"+'\n')
+                output.insert(tk.END,"'!EXPORTPATH' \nprints the complete path to the export file -- syntax-> !EXPORTPATH"+'\n')
+                output.insert(tk.END,'"!TABLEVIEW" \nshows output from \'select\' command of MySQL in a tabulated form -- syntax-> !TABLEVIEW table_name')
+                output.insert(tk.END,"'!HELP' \nexecutes this help center -- syntax-> !HELP"+'\n')
+                output.insert(tk.END,'"!DOC" \nruns the HTML page documentaion present with this version')
+                output.insert(tk.END,'Attributes are seperated by single space (as shown in syntax above.\nNOTE: it is important to be using the database of which you are using table in connector commands or error can be raised'+'\n')
+                output.insert(tk.END,'Execute !DOC or run the documentaion from menu above to get a HTML page documentaion for this version.')
+            elif splitCommand[0]=='!VERSION':
+                output.insert(tk.END,'Version: '+VERSION+'\n')
+            elif splitCommand[0]=='!EXPORTPATH':
+                output.insert(tk.END,os.getcwd()+'\n')
+            elif splitCommand[0]=='!TABLEVIEW':
+                translator.execute('desc '+splitCommand[1])
+                headers = []
+                for x in translator.fetchall():
+                    headers.append(x[0])
+                translator.execute('select * from '+splitCommand[1])
+                tableView(splitCommand[1],headers,translator.fetchall())
+                output.insert(tk.END,'Opening Docs\n')
+            elif splitCommand[0]=='!DOC':
+                web.open('Documentation.html')
+                output.insert(tk.END,'Opened\n')
+            else:
+                output.insert(tk.END,'--Unknown command, check spellings or existence of the command--'+'\n')
+        except Exception as err:
+            output.insert(tk.END,f'Some error occurred, printing error:{err}'+'\n')
+    else:
+        try:
+            translator.execute(command)
+        except mysql.connector.Error as err:
+            output.insert(tk.END,str(err)+'\n')
+        result = translator.fetchall()
+        if result==[]:
+            output.insert(tk.END,'--Query OK, no result--'+'\n')
+        else:
+            for x in result:
+                output.insert(tk.END,str(x)+'\n')
+root = tk.Tk()
+root.title('MySql Connector Python')
+Query = tk.Label(root, text='Enter Query')
+Query.grid(row=0,column=0,columnspan=2)
+statement = tk.StringVar()
+query = tk.Entry(root,textvariable=statement)
+query.grid(row=1,column=0,columnspan=2)
+Output = tk.Label(root,text='Output:')
+Output.grid(row=3,column=0,columnspan=2)
+outputFrame=tk.Frame(root)
+scrollbar=Scrollbar(outputFrame)
+scrollbar.pack(side='right',fill='y')
+output=tk.Text(outputFrame, wrap='word', height=10,width=40,yscrollcommand=scrollbar.set)
+output.pack()
+outputFrame.grid(row=4,column=0,columnspan=2)
+scrollbar.config(command=output.yview)
+def exitt():
+    conn.commit()
+    translator.close()
+    conn.close()
+    exit()
+menu=Menu(root)
+root.config(menu=menu)
+menu1 = Menu(menu)
+Connector_Commands_Menu = Menu(menu)
+menu.add_cascade(label='Menu',menu=menu1)
+menu1.add_command(label='Exit',command=exitt)
+def configuration():
+    config = Toplevel()
+    config.title('Configure')
+    Username=tk.Label(config,text='Username(of mysql account you want to connect to):')
+    Username.grid(row=0,column=0)
+    username_var = tk.StringVar()
+    username=tk.Entry(config,textvariable=username_var)
+    username.grid(row=0,column=1)
+    Password=tk.Label(config,text='Password(of MySQL account you are using):')
+    Password.grid(row=1,column=0)
+    password_var = tk.StringVar()
+    password = tk.Entry(config,textvariable=password_var)
+    password.grid(row=1,column=1)
+    Host = tk.Label(config,text='Host IP')
+    Host.grid(row=2,column=0)
+    host_var=tk.StringVar()
+    host=tk.Entry(config,textvariable=host_var)
+    host.grid(row=2,column=1)
+    AutoConnect = tk.Label(config,text='Auto-Connect?')
+    AutoConnect.grid(row=3,column=0)
+    autoconnect_var=tk.StringVar()
+    autoconnectTrue=tk.Radiobutton(config,text='True',variable=autoconnect_var,value='true')
+    autoconnectTrue.grid(row=3,column=1)
+    autoconnectFalse=tk.Radiobutton(config,text='False',variable=autoconnect_var,value='false')
+    autoconnectFalse.grid(row=3,column=2)
+    def configg():
+        configure(username_var.get(),password_var.get(),autoconnect_var.get(),host_var.get())
+        config.destroy()
+        exitt()
+    Configure = tk.Button(config,text='Configure',width=20,command=configg)
+    Configure.grid(row=4,column=0,columnspan=2)
+    config.mainloop()
+configmenu= Menu(menu)
+menu.add_cascade(label='Configure', menu=configmenu)
+menu.add_cascade(label='Commands',menu=Connector_Commands_Menu)
+configmenu.add_command(label='Configure',command=configuration)
+def tableView(tableName,headers,content):
+    TableView = Toplevel()
+    TableView.title('Table View-'+tableName)
+    treev=ttk.Treeview(TableView)
+    treev.pack(side='right')
+    scrollv=ttk.Scrollbar(TableView,orient='vertical',command=treev.yview)
+    scrollx=ttk.Scrollbar(TableView,orient='horizontal',command=treev.xview)
+    scrollx.pack(side='left',fill='x')
+    scrollv.pack(side='right',fill='y')
+    treev.configure(yscrollcommand=scrollv.set,xscrollcommand=scrollx.set)
+    idd = 1
+    columns = []
+    for x in headers:
+        columns.append(str(idd))
+        idd += 1
+    treev['columns']= columns
+    treev['show']='headings'
+    idd=1
+    for x in headers:
+        treev.column(str(idd))
+        treev.heading(str(idd),text=x)
+        idd+=1
+    idd = 1
+    for x in content:
+        treev.insert("",'end',text='L'+str(idd),values=x)
+    TableView.mainloop()
+def help_center():
+    helpPage = Toplevel()
+    helpPage.title('Help Center')
+    Message = tk.Message(helpPage, text=('All Connector commands are uppercase and start with a exclamatory mark, the commands are-'+'\n'+"'!EXPORT' \nexports data to excel file 'OutPut.xlsx' -- syntax-> !EXPORT table_name sheet_name -- NOTE:please make sure you are connected to the desired database before exporting or it won't work"+'\n'+
+                                         "'!SHEETNAMES' \ndisplays all the sheet names present in your output excel file -- syntax-> !SHEETNAMES"+'\n'+"'!RENAMESHEET' \nrenames a sheet in output file -- syntax-> !RENAMESHEET oldSheetName newSheetname"+'\n'+
+                                         "'!EXPORTDB' \nexports a complete database -- syntax-> !EXPORTDB db_name"+'\n'+"'!DELETESHEET' \ndeletes a sheet in the currently-using workbook -- syntax-> !DELETESHEET sheet_name"+'\n'+
+                                         "'!EXPORTNEW' \nexports data of a table to a new excel file -- syntax-> !EXPORTNEW table_name sheet_name workbook_name"+'\n'+"'!CONFIG' \nruns the configuration -- syntax-> !CONFIG"+'\n'+
+                                         "'!VERSION' \nprints the version of program -- syntax-> !VERSION"+'\n'+"'!EXPORTPATH' \nprints the complete path to the export file -- syntax-> !EXPORTPATH"+'\n'+
+                                         "'!HELP' \nexecutes this help center -- syntax-> !HELP"+'\n'+'"!DOC" \nruns the HTML page documentaion present with this version'+'\n'+'Attributes are seperated by single space (as shown in syntax above.\nNOTE: it is important to be using the database of which you are using table in connector commands or error can be raised'+'\n'))
+    Message.grid(row=0,column=0)
+    output.insert(tk.END,'Execute !DOC or run the documentaion from menu above to get a HTML page documentaion for this version.')
+    helpPage.mainloop()
+menu1.add_command(label='Help',command=help_center)
+Connector_Commands_Menu.add_command(label='Help',command=help_center)
+def tableView_menu():
+    window = Toplevel()
+    window.title('!TABLEVIEW')
+    label = tk.Label(window,text='Table Name:')
+    label.grid(row=0,column=0)
+    table_name = tk.StringVar()
+    tableName = tk.Entry(window,textvariable=table_name)
+    tableName.grid(row=0,column=1)
+    def show():
+        translator.execute('desc '+table_name.get())
+        headers = []
+        for x in translator.fetchall():
+            headers.append(x[0])
+        translator.execute('select * from '+table_name.get())
+        window.destroy()
+        tableView(table_name.get(),headers,translator.fetchall())
+    show_table = tk.Button(window,text='Show',command=show)
+    show_table.grid(row=2,column=0,columnspan=2)
+    window.mainloop()
+Connector_Commands_Menu.add_command(label='Table View',command=tableView_menu)
+def exportWIN():
+    ex = Toplevel()
+    ex.title('!EXPORT')
+    TNL = tk.Label(ex,text='Table Name:')
+    TNL.grid(row=0,column=0)
+    TNEV = tk.StringVar()
+    TNE = tk.Entry(ex,textvariable=TNEV)
+    TNE.grid(row=0,column=1)
+    SNL = tk.Label(ex,text='Sheet Name(for excel):')
+    SNL.grid(row=1,column=0)
+    SNEV = tk.StringVar()
+    SNE=tk.Entry(ex,textvariable=SNEV)
+    SNE.grid(row=1,column=1)
+    def export():
+        translator.execute('desc '+TNEV.get())
+        headers = []
+        for x in translator.fetchall():
+            headers.append(x[0])
+        translator.execute('select * from '+TNEV.get())
+        commands('OutPut').export(SNEV.get(),headers,translator.fetchall())
+        ex.destroy()
+    EB = tk.Button(ex,text='Export',command=export)
+    EB.grid(row=3,column=0,columnspan=2)
+    ex.mainloop()
+Connector_Commands_Menu.add_command(label='Export',command=exportWIN)
+def sheetnames():
+    output.insert(tk.END,str(commands('Output').getSheetNames())+'\n')
+Connector_Commands_Menu.add_command(label='Sheet names',command=sheetnames)
+def exportDB():
+    window=Toplevel()
+    window.title('!EXPORTDB')
+    label=tk.Label(window,text='Database Name:')
+    label.grid(row=0,column=0)
+    dbName = tk.StringVar()
+    db_name = tk.Entry(window,textvariable=dbName)
+    db_name.grid(row=0,column=1,columnspan=2)
+    def exportDBB():
+        translator.execute(f'use {dbName.get()}')
+        translator.execute('show tables')
+        tables = translator.fetchall()
+        for table in tables:
+            translator.execute('desc '+table[0])
+            headers = []
+            for x in translator.fetchall():
+                headers.append(x[0])
+            translator.execute('select * from '+table[0])
+            commands('OutPut').export(table[0],headers,translator.fetchall())
+        window.destroy()
+    execute = tk.Button(window,text='Export',command=exportDBB)
+    execute.grid(row=1,column=0,columnspan=3)
+    window.mainloop()
+Connector_Commands_Menu.add_command(label='Export database',command=exportDB)
+def exportPATH():
+    output.insert(tk.END,os.getcwd()+'\n')
+def deleteSheet():
+    win = Toplevel()
+    win.title('!DELETESHEET')
+    sheetName = tk.StringVar()
+    SNlabel = tk.Label(win,text='Sheet Name:')
+    SNlabel.grid(row=0,column=0)
+    SNentry = tk.Entry(win,textvariable=sheetName)
+    SNentry.grid(row=0,column=1)
+    def delete():
+        commands('OutPut').deleteSheet(sheetName.get())
+        win.destroy()
+    deleteButton = tk.Button(win,text='Delete',command=delete)
+    deleteButton.grid(row=1,column=0,columnspan=2)
+    main.mainloop()
+Connector_Commands_Menu.add_command(label='Export path',command=exportPATH)
+Connector_Commands_Menu.add_command(label='Delete sheet',command=deleteSheet)
+def renameSheet():
+    win = Toplevel()
+    win.title('!RENAMESHEET')
+    sheetName = tk.StringVar()
+    SNlabel = tk.Label(win,text='Old Sheet Name:')
+    SNlabel.grid(row=0,column=0)
+    SNentry = tk.Entry(win,textvariable=sheetName)
+    SNentry.grid(row=0,column=1)
+    SN2label=tk.Label(win,text='New sheet name:')
+    SN2label.grid(row=1,column=0)
+    newSheetName = tk.StringVar()
+    SN2entry = tk.Entry(win,textvariable=newSheetName)
+    SN2entry.grid(row=1,column=1)
+    def rename():
+        commands('OutPut').renameSheet(sheetName.get(),newSheetName.get())
+        win.destroy()
+    deleteButton = tk.Button(win,text='Rename',command=rename)
+    deleteButton.grid(row=2,column=0,columnspan=2)
+    win.mainloop()
+Connector_Commands_Menu.add_command(label='Rename sheet',command=renameSheet)
+def version():
+    output.insert(tk.END,VERSION)
+menu1.add_command(label='Version',command=version)
+def doc():
+    web.open('Documentation.html')
+menu1.add_command(label='Documentation', command=doc)
+def exportNEW():
+    win = Toplevel()
+    win.title('!EXPORTNEW')
+    tk.Label(win,text='Table name(of which you are exporting):').grid(row=0,column=0)
+    tableName = tk.StringVar()
+    tk.Entry(win,textvariable=tableName).grid(row=0,column=1)
+    tk.Label(win,text='Sheet name(you want in the workbook):').grid(row=1,column=0)
+    sheetName = tk.StringVar()
+    tk.Entry(win,textvariable=sheetName).grid(row=1,column=1)
+    tk.Label(win,text='Workbook name:').grid(row=2,column=0)
+    workbookName = tk.StringVar()
+    tk.Entry(win,textvariable=workbookName).grid(row=2,column=1)
+    #table name, sheet name, workbook name
+    def export():
+        translator.execute('desc '+tableName.get())
+        headers = []
+        for x in translator.fetchall():
+            headers.append(x[0])
+        translator.execute('select * from '+tableName.get())
+        commands('OutPut').exportToNew(sheetName.get(),headers,translator.fetchall(),workbookName.get())
+        win.destroy()
+    tk.Button(win,text='Export',command=export).grid(row=3,column=0,columnspan=2)
+    win.mainloop()
+Connector_Commands_Menu.add_command(label='Export to new',command=exportNEW)
+try:
+    open('cache.cache','r')
+except:
+    f = open('cache.cache','w')
+    f.close()
+    configuration()
+    print('Please restart to implement configuration')
+VERSION = 'Version 1.1 (nicknamed "Succesor")'
+commands('OutPut')
+try:
+    DATA_FILE = open('Account_Detail.sad','r',encoding='utf-8')
+    line = DATA_FILE.readline()
+    details=line.split(',')
+    if details[2]=='true':
+        conn = mysql.connector.connect(user=details[0],password=details[1],host=details[3])
+    else:
+        conn = mysql.connector.connect(user=input('Enter your mysql user (if not set during configuration, type root): '),password=input('Enter your mysql account password: '),host=input('Enter Host IP: '))
+except Exception as err:
+    print(err)
+    conn = mysql.connector.connect(user=input('Enter your mysql user (if not set during configuration, type root): '),password=input('Enter your mysql account password: '),host=input('Enter Host IP: '))
+translator = conn.cursor()
+execute=tk.Button(root,command=runner,text='Execute')
+execute.grid(row=2,column=0,columnspan=2)
+root.mainloop()

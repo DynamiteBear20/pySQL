@@ -1,0 +1,139 @@
+print('--importing dependencies and libraries--')
+import os,sys,subprocess
+import webbrowser as web
+try:
+    import mysql.connector
+    from mysql.connector import errorcode
+    import openpyxl
+except ModuleNotFoundError:
+    print('--Dependencies not installed, installing--')
+    subprocess.run(['pip','install','openpyxl'])
+    subprocess.run(['pip','install','mysql-connector-python'])
+    print('--Dependencies installed--')
+    import mysql.connector
+    from mysql.connector import errorcode
+    import openpyxl
+from Output import commands
+from Configure_Details import configure
+print('--Librareries imported--')
+
+def runner():
+    run=True
+    while run:
+        command = input('mysql-python>')
+        if command=='exit':
+            conn.commit()
+            translator.close()
+            conn.close()
+            exit()
+        elif command=='':
+            conn.commit()
+            translator.close()
+            conn.close()
+            exit()
+        if command[0]=='!':
+            splitCommand = command.split(' ')
+            try:
+                if splitCommand[0] == '!EXPORT':
+                    translator.execute('desc '+splitCommand[1])
+                    headers = []
+                    for x in translator.fetchall():
+                        headers.append(x[0])
+                    translator.execute('select * from '+splitCommand[1])
+                    commands('OutPut').export(splitCommand[2],headers,translator.fetchall())
+                elif splitCommand[0]=='!SHEETNAMES':
+                    output.insert(tk.END,str(commands('OutPut').getSheetNames()))
+                elif splitCommand[0]=='!RENAMESHEET':
+                    oldSheetName = splitCommand[1]
+                    newSheetName = splitCommand[2]
+                    commands('OutPut').renameSheet(oldSheetName,newSheetName)
+                elif splitCommand[0]=='!EXPORTDB':
+                    translator.execute(f'use {splitCommand[1]}')
+                    translator.execute('show tables')
+                    tables = translator.fetchall()
+                    for table in tables:
+                        translator.execute('desc '+table[0])
+                        headers = []
+                        for x in translator.fetchall():
+                            headers.append(x[0])
+                        translator.execute('select * from '+table[0])
+                        commands('OutPut').export(table[0],headers,translator.fetchall())
+                elif splitCommand[0]=='!DELETESHEET':
+                    commands('OutPut').deleteSheet(splitCommand[1])
+                elif splitCommand[0]=='!EXPORTNEW':
+                    translator.execute('desc '+splitCommand[1])
+                    headers = []
+                    for x in translator.fetchall():
+                        headers.append(x[0])
+                    translator.execute('select * from '+splitCommand[1])
+                    commands('OutPut').exportToNew(splitCommand[2],headers,translator.fetchall(),splitCommand[3])
+                elif splitCommand[0]=='!CONFIG':
+                    configure()
+                    conn.commit()
+                    translator.close()
+                    conn.close()
+                    exit()
+                elif command=='!HELP':
+                    print('All Connector commands are uppercase and start with a exclamatory mark, the commands are-')
+                    print("'!EXPORT' \nexports data to excel file 'OutPut.xlsx' -- syntax-> !EXPORT table_name sheet_name -- NOTE:please make sure you are connected to the desired database before exporting or it won't work"+'\n')
+                    print("'!SHEETNAMES' \ndisplays all the sheet names present in your output excel file -- syntax-> !SHEETNAMES")
+                    print("'!RENAMESHEET' \nrenames a sheet in output file -- syntax-> !RENAMESHEET oldSheetName newSheetname")
+                    print("'!EXPORTDB' \nexports a complete database -- syntax-> !EXPORTDB db_name"+'\n')
+                    print("'!DELETESHEET' \ndeletes a sheet in the currently-using workbook -- syntax-> !DELETESHEET sheet_name")
+                    print("'!EXPORTNEW' \nexports data of a table to a new excel file -- syntax-> !EXPORTNEW table_name sheet_name workbook_name")
+                    print("'!CONFIG' \nruns the configuration -- syntax-> !CONFIG")
+                    print("'!VERSION' \nprints the version of program -- syntax-> !VERSION")
+                    print("'!EXPORTPATH' \nprints the complete path to the export file -- syntax-> !EXPORTPATH")
+                    print("'!HELP' \nexecutes this help center -- syntax-> !HELP")
+                    print('"!DOC" \nruns the HTML page documentaion present with this version')
+                    print('Attributes are seperated by single space (as shown in syntax above.\nNOTE: it is important to be using the database of which you are using table in connector commands or error can be raised'+'\n')
+                    print('It is advised to run !DOC instead of !HELP because the first would run the documentaion html page while the latter will just print the commands (as printed now)')
+                elif splitCommand[0]=='!VERSION':
+                    print('Version: '+VERSION)
+                elif splitCommand[0]=='!EXPORTPATH':
+                    print(os.getcwd())
+                elif splitCommand[0]=='!DOC':
+                    web.open('Documentation.html')
+                else:
+                    print('--Unknown command, check spellings or existence of the command--')
+            except Exception as err:
+                print(f'Some error occurred, printing error:{err}')
+        else:
+            try:
+                translator.execute(command)
+            except mysql.connector.Error as err:
+                print(str(err))
+            result = translator.fetchall()
+            if result==[]:
+                print('--Query OK, no result--')
+            else:
+                for x in result:
+                    print(str(x))
+try:
+    open('cache.cache','r')
+except:
+    f = open('cache.cache','w')
+    f.close()
+    print('--First time run,configurating--')
+    configure()
+    print('Please restart to implement configuration')
+VERSION = 'Pre-release 0.9'
+commands('OutPut')
+try:
+    DATA_FILE = open('Account_Detail.sad','r',encoding='utf-8')
+    line = DATA_FILE.readline()
+    details=line.split(',')
+    if details[2]=='true':
+        print('--Trying to connect automatically--')
+        conn = mysql.connector.connect(user=details[0],password=details[1],host=details[3])
+    else:
+        print('--Auto-connect disabled or some other problem occured, trying manually--')
+        conn = mysql.connector.connect(user=input('Enter your mysql user (if not set during configuration, type root): '),password=input('Enter your mysql account password: '),host=input('Enter Host IP: '))
+except Exception as err:
+    print(err)
+    print('--There was an issue, trying manually--')
+    conn = mysql.connector.connect(user=input('Enter your mysql user (if not set during configuration, type root): '),password=input('Enter your mysql account password: '),host=input('Enter Host IP: '))
+print('--Connected, setting up transactions--')
+translator = conn.cursor()
+print('--Transactions set up, start as mysql-python> prompt comes--')
+runner()

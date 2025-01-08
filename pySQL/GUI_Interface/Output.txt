@@ -1,0 +1,46 @@
+import  openpyxl
+class commands():
+    def __init__(self,bookName):
+        self.bookname = bookName+'.xlsx'
+        self.book = openpyxl.load_workbook(self.bookname)
+    def export(self,sheetName,headers,content):
+        if not sheetName in self.book.sheetnames:
+            self.book.create_sheet(sheetName)
+        self.sheet = self.book[sheetName]
+        self.column_count = 1
+        for x in headers:
+            self.sheet.cell(row=1,column=self.column_count,value=x)
+            self.column_count += 1
+        self.row_count = 2
+        for x in content:
+            self.column_count = 1
+            for y in x:
+                self.sheet.cell(row=self.row_count,column=self.column_count,value=y)
+                self.column_count +=1
+            self.row_count += 1
+        self.book.save(self.bookname)
+    def getSheetNames(self):
+        return self.book.sheetnames
+    def renameSheet(self,sheetName,NewName):
+        self.sheet = self.book[sheetName]
+        self.sheet.title = NewName
+        self.book.save(self.bookname)
+    def deleteSheet(self,sheetName):
+        self.book.remove_sheet(self.book[sheetName])
+        self.book.save(self.bookname)
+    def exportToNew(self,sheetName,headers,content,fileName):
+        self.file = openpyxl.Workbook()
+        self.file.active
+        self.sheet = self.file.create_sheet(sheetName)
+        self.column_count = 1
+        for x in headers:
+            self.sheet.cell(row=1,column=self.column_count,value=x)
+            self.column_count += 1
+        self.row_count = 2
+        for x in content:
+            self.column_count = 1
+            for y in x:
+                self.sheet.cell(row=self.row_count,column=self.column_count,value=y)
+                self.column_count +=1
+            self.row_count += 1
+        self.file.save(fileName+'.xlsx')

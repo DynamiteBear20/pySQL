@@ -1,0 +1,15 @@
+Pre-release 0.5 -->
+Complete connector implementation
+
+Pre-release 0.9-->
+Connector Commands(export,reconfigure)
+Auto-connect(configure)
+Version system implementation
+
+Version 1.1-->
+GUI interface (optional)
+Installer Module
+
+Whats coming?
+Beta interface(experimental features)
+mini

@@ -1,0 +1,4 @@
+def configure():
+    file = open('Account_Detail.sad','w',encoding='utf-8')
+    file.write(input('Enter MySQL account username: ')+','+input('Enter MySQL account password')+','+input('Enable Auto-Connect? (true/false)')+','+input('Enter host ip address: '))
+    file.close()
